@@ -11,7 +11,8 @@ method and a small time step. There is no phase-averaging here.
 
 import numpy as np
 from matplotlib import pyplot as plt
-import scipy
+from timestepping import *
+from KG_functions import *
 
 #############################################################
 def modvar_aved_non_d(t, v_vals):
@@ -23,8 +24,6 @@ def modvar_aved_non_d(t, v_vals):
         N_tot += kernel[j]*N_cur
     
     return N_tot
-
-
 
 ################################################################
 # Setup parameters:
@@ -51,7 +50,7 @@ visc = 1e-4
 ##################################################################
 # Define the level of time-scale separation
 global epsilon
-epsilon = 0.1
+epsilon = 0.01
 
 # Calculate the linear dispersion relation:
 global omega
@@ -77,7 +76,7 @@ init_hat = np.array([np.fft.fft(init_a)*omega,np.fft.fft(init_b)])
 
 # Modulation variable solution.
 # This is in spectral space!
-V = np.asarray(RK4(KG_modvar,init_hat,t,dt))
+V = np.asarray(RK4(KG_modvar,init_hat,t,dt, [omega, visc, k]))
 
 # Transform back to the standard variable
 U = np.zeros_like(V)
@@ -93,5 +92,5 @@ U_b = np.real(np.fft.ifft(U[:,1,:]))
 
 ##############################################################
 # Save the reference solution numpy array:
-savename = f'KG_ref_sol_eps{epsilon}.npy'
+savename = f'reference_solutions/KG/KG_ref_sol_eps{epsilon}.npy'
 np.save(savename, U_a)
