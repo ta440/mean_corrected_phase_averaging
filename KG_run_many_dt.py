@@ -74,7 +74,7 @@ P = 4
 DTs = np.array([1]) #np.array([1,1.5,2,2.5,3])
 
 # Range of local mean correction averaging windows to examine
-zetas = np.aarray([0.5, 1]) #np.arange(0.05,2.00,0.05)
+zetas = np.array([0.5, 1]) #np.arange(0.05,2.00,0.05)
 zetas = np.round(zetas,3)
 
 # Solutions to save errors in 
