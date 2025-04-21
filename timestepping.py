@@ -2,6 +2,7 @@
 Functions for timestepping.
 '''
 
+import numpy as np
 
 def RK4_step(f,x,t,h,*pars):
     f0 = f(t,x,*pars)

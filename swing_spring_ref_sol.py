@@ -12,8 +12,9 @@ from timestepping import *
 from swing_spring_functions import *
 
 ##################
-# Choose the range of resonance factors:
-rhos = [2]#np.arange(1.5,2.51,0.010)
+# Choose either a range of resonance factors,
+# or a single one.
+rhos = [1.88] #np.arange(1.5,2.51,0.010)
 
 ###################
 #Parameter values
@@ -67,7 +68,8 @@ for m in np.arange(len(rhos)):
     ref_sols[m,1,:] = np.real(sol_u[inds,1])
     ref_sols[m,2,:] = np.real(sol_u[inds,2])
 
+print(np.shape(ref_sols))
 
 # Save the solution
-savename = f'reference_solutions/swing_spring/swing_spring_RF_range.npy'
+savename = f'reference_solutions/swing_spring/swing_spring_rho1.88.npy'
 np.save(savename, ref_sols)
