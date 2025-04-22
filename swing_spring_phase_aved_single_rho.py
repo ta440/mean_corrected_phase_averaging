@@ -48,11 +48,6 @@ z0 = 0.08
 init = np.array([x0,y0,z0])
 
 # Initial condition for the mean correction:
-#C0 = classical_C(init, [lamda,omega_R,rho])
-#L_inv = np.array([-1j/omega_R,-1j/omega_R,-1j/(omega_R*rho)])
-#init_w = init - L_inv*C0
-
-# Or hard-coded:
 init_w = np.array([x0,y0,z0-(lamda/(4*rho*rho*omega_R*omega_R))*(x0*np.conj(x0)+y0*np.conj(y0))])
 
 #####################
@@ -63,7 +58,6 @@ dt = 0.5
 t = np.arange(0.0, TT, dt)
 
 # Time from the reference solution:
-TT = 200 #Total time of the simulation
 dt_b = 0.01
 t_b = np.arange(0.0, TT, dt_b)
 

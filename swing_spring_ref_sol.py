@@ -14,13 +14,14 @@ from swing_spring_functions import *
 ##################
 # Choose either a range of resonance factors,
 # or a single one.
-single_sol = True
+single_sol = False
 
 # Set a single rho
 rho = 1.7
 
 # Or a range:
-#rhos = np.arange(1.5,2.51,0.010)
+rhos = np.arange(1.5,2.51,0.010)
+rhos = np.round(rhos,2)
 
 ###################
 #Parameter values
@@ -48,18 +49,11 @@ init = np.array([x0,y0,z0])
 #######################################
 # Define the time interval of the base solution
 TT = 200 
-dt = 1e-4
+dt = 1e-2
 t = np.arange(0.0, TT, dt)
 
-# Coarser time interval to save the solution
-dt_coarse = 1e-2
-t_coarse = np.arange(0.0, TT, dt_coarse)
-
-inds = np.arange(0,len(t),int(np.rint(dt_coarse/dt)))
-inds = np.asarray(inds)
-
 # Array to store the solutions
-ref_sols = np.zeros((len(rhos),3,len(t_coarse)))
+ref_sols = np.zeros((len(rhos),3,len(t)))
 
 #####################################
 # Create the solutions:
@@ -73,9 +67,9 @@ for m in np.arange(len(rhos)):
     sol_u = np.asarray(RK4(swing_spring,init,t,dt,[omega_R, rho, lamda]))
     sol_u = np.asarray(sol_u)
 
-    ref_sols[m,0,:] = np.real(sol_u[inds,0])
-    ref_sols[m,1,:] = np.real(sol_u[inds,1])
-    ref_sols[m,2,:] = np.real(sol_u[inds,2])
+    ref_sols[m,0,:] = np.real(sol_u[:,0])
+    ref_sols[m,1,:] = np.real(sol_u[:,1])
+    ref_sols[m,2,:] = np.real(sol_u[:,2])
 
 # Save the solution
 if single_sol == True:
