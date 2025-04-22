@@ -48,8 +48,6 @@ def N(t,u,args):
                      (1j*lamda/omega_R)*np.real(y)*np.real(z),
                      (1j*lamda/(2*rho*omega_R))*((np.real(x)**2) + (np.real(y)**2))])
 
-
-
 def N_ave(t, v, args):
 
     mod_x,mod_y,mod_z = v
@@ -73,8 +71,50 @@ def N_ave(t, v, args):
                      np.exp(1j*omega_R*t)*N_tot[1],
                      np.exp(1j*omega_R*rho*t)*N_tot[2]])
 
+##################################################
+# For the mean correction
 
-def classical_C(w,t):
+def classical_C(w, args):
     x,y,z = w 
+
+    lamda,omega_R,rho = args
     
     return np.array([0,0,(1j*lamda/(4*rho*omega_R))*((x*np.conj(x) + y*np.conj(y)))])
+
+def meancor_ave(t,w,args):
+    grad_tot = np.zeros_like(w, dtype='complex128')
+
+    lamda, omega_R, rho, K, s_vals, kernel = args
+
+    C = classical_C(w, [lamda,omega_R,rho])
+
+    L_inv = np.array([-1j/omega_R,-1j/omega_R,-1j/(omega_R*rho)])
+    
+    for j in np.arange(K):
+        grad_cur = rhs_D(w,t+s_vals[j],[lamda, omega_R, rho, L_inv, C])
+        grad_tot += kernel[j]*grad_cur
+    
+    return grad_tot
+    
+def rhs_D(w,t,args):
+    w_x,w_y,w_z = w
+
+    lamda, omega_R, rho, L_inv, C = args
+    
+    #Convert from u to w:
+    x = np.exp(-1j*omega_R*t)*w_x + L_inv[0]*C[0]
+    y = np.exp(-1j*omega_R*t)*w_y + L_inv[1]*C[1]
+    z = np.exp(-1j*omega_R*rho*t)*w_z + L_inv[2]*C[2]
+    
+    u = np.array([x,y,z])
+    
+    N_cur = N(t,u, [lamda, omega_R, rho])
+    
+    #Compute N-C
+    rhs = N_cur - C
+    
+    # return e^((t+s)/L) (N-C)
+    return np.array([np.exp(1j*omega_R*t)*rhs[0],
+                     np.exp(1j*omega_R*t)*rhs[1],
+                     np.exp(1j*omega_R*rho*t)*rhs[2]])
+

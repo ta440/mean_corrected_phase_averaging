@@ -14,7 +14,13 @@ from swing_spring_functions import *
 ##################
 # Choose either a range of resonance factors,
 # or a single one.
-rhos = [1.88] #np.arange(1.5,2.51,0.010)
+single_sol = True
+
+# Set a single rho
+rho = 1.7
+
+# Or a range:
+#rhos = np.arange(1.5,2.51,0.010)
 
 ###################
 #Parameter values
@@ -23,6 +29,9 @@ l_o = 1.2
 l = 1
 k = 4*g
 m = 1
+
+if single_sol:
+    rhos = np.array([rho])
 
 ###################
 
@@ -68,8 +77,10 @@ for m in np.arange(len(rhos)):
     ref_sols[m,1,:] = np.real(sol_u[inds,1])
     ref_sols[m,2,:] = np.real(sol_u[inds,2])
 
-print(np.shape(ref_sols))
-
 # Save the solution
-savename = f'reference_solutions/swing_spring/swing_spring_rho1.88.npy'
+if single_sol == True:
+    savename = f'reference_solutions/swing_spring/swing_spring_rho{rho}.npy'
+else:
+    savename = f'reference_solutions/swing_spring/swing_spring_rho_range.npy'
+
 np.save(savename, ref_sols)

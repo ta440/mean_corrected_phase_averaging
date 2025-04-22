@@ -7,6 +7,10 @@ Here we compare standard phase averaging
 and mean corrected phase-averaging, using a classical
 mean correction.
 
+From convention in earlier studies (see Andrews 2024 PhD thesis)
+standard phase-averaging is algorithm C
+and mean corrected phase-averaging is algorithm D
+
 '''
 
 import numpy as np
@@ -15,9 +19,8 @@ from swing_spring_functions import *
 from matplotlib import pyplot as plt
 
 ##################
-# Choose the resonance factor
-# or a single one.
-rho = 2
+# Specify the resonance factor
+rho = 1.88
 
 ###################
 #Parameter values
@@ -43,6 +46,14 @@ y0 = 1j*0.03427/omega_R
 z0 = 0.08
 
 init = np.array([x0,y0,z0])
+
+# Initial condition for the mean correction:
+#C0 = classical_C(init, [lamda,omega_R,rho])
+#L_inv = np.array([-1j/omega_R,-1j/omega_R,-1j/(omega_R*rho)])
+#init_w = init - L_inv*C0
+
+# Or hard-coded:
+init_w = np.array([x0,y0,z0-(lamda/(4*rho*rho*omega_R*omega_R))*(x0*np.conj(x0)+y0*np.conj(y0))])
 
 #####################
 
@@ -72,9 +83,11 @@ u_z = an_sol[:,2]
 ###################
 K = 31  #Number of points for averaging
 zetas = np.linspace(0.1,4.0,40) #Length of averaging window
+zetas = np.round(zetas,1)
 alpha = 4
 
 C_errs = np.zeros(len(zetas))
+D_errs = np.zeros(len(zetas))
 
 for j in np.arange(len(zetas)):
     zeta = zetas[j]
@@ -91,6 +104,9 @@ for j in np.arange(len(zetas)):
         e_sLs[i,0] = np.exp(1j*omega_R*s_vals[i])
         e_sLs[i,1] = np.exp(1j*omega_R*s_vals[i])
         e_sLs[i,2] = np.exp(1j*omega_Z*s_vals[i])
+
+    ##################
+    # Standard phase-averaging C_:
 
     C_v = np.asarray(RK4(N_ave,init,t,dt,[omega_R, rho, lamda, kappa, kernel, K, e_sLs]))
 
@@ -109,21 +125,45 @@ for j in np.arange(len(zetas)):
 
     C_errs[j] = C_tot_err
 
+    ################################
+    # Mean corrected D_
+    D_w = np.asarray(RK4(meancor_ave,init,t,dt,[lamda, omega_R, rho, K, s_vals, kernel]))
+                     
+    D_u_x = np.exp(-1j*omega_R*t)*D_w[:,0]
+    D_u_y = np.exp(-1j*omega_R*t)*D_w[:,1]
+    D_u_z = np.exp(-1j*omega_Z*t)*D_w[:,2]+(lamda/(4*rho*rho*omega_R*omega_R))*((D_w[:,0]*np.conj(D_w[:,0]) + D_w[:,1]*np.conj(D_w[:,1])))
+
+    D_u_x = np.real(D_u_x)
+    D_u_y = np.real(D_u_y)
+    D_u_z = np.real(D_u_z)
+
+    D_err = np.sqrt((D_u_x-u_x)**2 + (D_u_y-u_y)**2 + (D_u_z-u_z)**2)
+    D_tot_err = np.sum(D_err)/len(t)
+
+    D_errs[j] = D_tot_err
+
 ###################################################
 #Compute total L2 errors:
-#print('The resonance factor is', rho)
+print('\n')
+
+print('The resonance factor is', rho)
 print('The averaging window size is', eta)
-#print('Our large time step is', dt)
     
-
+print('\n')
 print('Best standard phase averaging error is', np.min(C_errs))
+print('Using an averaging window of', zetas[np.argmin(C_errs)])
 
-print('Best mean corrected phase averaging error is TO DO')
+print('Best mean corrected phase averaging error is', np.min(D_errs))
+print('Using an averaging window of', zetas[np.argmin(D_errs)])
 
 #############
 # Make a Peddle plot!
 
 plt.figure()
-plt.plot(zetas,C_errs)
-
+plt.plot(zetas, C_errs, label='Standard phase-averaging', c='k')
+plt.plot(zetas, D_errs, label='Mean corrected phase-averaging', c='r', linestyle='dashed')
+plt.legend()
+plt.title(f'Compare phase-averaged methods in the swinging spring, rho={rho}')
+plt.xlabel('Zeta, normalised averaging window')
+plt.ylabel('Solution error')
 plt.show()
