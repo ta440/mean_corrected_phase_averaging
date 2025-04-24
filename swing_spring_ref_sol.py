@@ -8,20 +8,21 @@ saved into a single numpy array.
 '''
 
 import numpy as np
-from timestepping import *
-from swing_spring_functions import *
+from functions.timestepping import *
+from functions.swing_spring_functions import *
 
 ##################
 # Choose either a range of resonance factors,
 # or a single one.
-single_sol = False
+single_sol = True
 
-# Set a single rho
-rho = 1.7
-
-# Or a range:
-rhos = np.arange(1.5,2.51,0.010)
-rhos = np.round(rhos,2)
+if single_sol:
+    rho = 1.95
+    rhos = np.array([rho])
+else:
+    # Define a range:
+    rhos = np.arange(1.5,2.51,0.010)
+    rhos = np.round(rhos,2)
 
 ###################
 #Parameter values
@@ -30,9 +31,6 @@ l_o = 1.2
 l = 1
 k = 4*g
 m = 1
-
-if single_sol:
-    rhos = np.array([rho])
 
 ###################
 

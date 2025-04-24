@@ -14,8 +14,8 @@ and mean corrected phase-averaging is algorithm D
 '''
 
 import numpy as np
-from timestepping import *
-from swing_spring_functions import *
+from functions.timestepping import *
+from functions.swing_spring_functions import *
 from matplotlib import pyplot as plt
 
 ##################

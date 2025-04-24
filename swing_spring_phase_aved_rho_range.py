@@ -7,8 +7,8 @@ averaging windows and resonance factors.
 '''
 
 import numpy as np
-from timestepping import *
-from swing_spring_functions import *
+from functions.timestepping import *
+from functions.swing_spring_functions import *
 
 ######################
 

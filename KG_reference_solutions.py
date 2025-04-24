@@ -11,8 +11,8 @@ method and a small time step. There is no phase-averaging here.
 
 import numpy as np
 from matplotlib import pyplot as plt
-from timestepping import *
-from KG_functions import *
+from functions.timestepping import *
+from functions.KG_functions import *
 
 #############################################################
 def modvar_aved_non_d(t, v_vals):

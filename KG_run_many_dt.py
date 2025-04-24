@@ -13,8 +13,8 @@ Comparing:
 import numpy as np
 from matplotlib import pyplot as plt
 import scipy
-from timestepping import *
-from KG_functions import *
+from functions.timestepping import *
+from functions.KG_functions import *
 
 ################################################################
 
