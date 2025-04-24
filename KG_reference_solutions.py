@@ -14,16 +14,12 @@ from matplotlib import pyplot as plt
 from functions.timestepping import *
 from functions.KG_functions import *
 
-#############################################################
-def modvar_aved_non_d(t, v_vals):
 
-    N_tot = np.zeros_like(v_vals)
-    
-    for j in np.arange(K):
-        N_cur = k_gord_modvar_non_d(t+s_vals[j],v_vals)
-        N_tot += kernel[j]*N_cur
-    
-    return N_tot
+##################################################################
+# Define the level of time-scale separation.
+# Values of 0.5,0.1,0.05,0.01 are used in the paper.
+global epsilon
+epsilon = 0.01
 
 ################################################################
 # Setup parameters:
@@ -37,29 +33,24 @@ Lx = 2*np.pi
 dx = Lx/Nx
 x = np.arange(0,Lx,dx)  
 
-global k
+X,T = np.meshgrid(x,t)
+#####################################
+
 k = np.fft.fftfreq(Nx,dx)*(2*np.pi)
 
-#Create a de-aliasing array with top 2/3 of wavenumbers set to zero:
+# Create a de-aliasing array with top 2/3 of wavenumbers set to zero:
 k_max = np.max(np.abs(k))
 
-#Specify a hyperviscosity to apply:
-global visc
-visc = 1e-4
-
-##################################################################
-# Define the level of time-scale separation
-global epsilon
-epsilon = 0.01
+# Specify the strength of hyperviscosity, if any.
+# This isn't required for stability, so we investigate
+# without it for now.
+visc = 0
 
 # Calculate the linear dispersion relation:
-global omega
 omega = np.sqrt(1 + (k**2))
 
 # Apply the time-scale separation for the linear term
 omega = omega*(1/epsilon)
-
-X,T = np.meshgrid(x,t)
 
 ###############################################################
 # Initial conditions:

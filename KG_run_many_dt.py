@@ -7,6 +7,10 @@ Comparing:
 2) Mean corrected phase-averaging with an analytical mean correction
 3) Mean corrected phase-averaging with a local mean correction
 
+Pick the value of epsilon (the speed of linear oscillations)
+and range of timesteps and averaging windows.
+Then, store the results and make a Peddle Plot.
+
 @author: timmo
 """
 
@@ -16,8 +20,11 @@ import scipy
 from functions.timestepping import *
 from functions.KG_functions import *
 
-################################################################
+################################################
+# Specify the level of time-scale separation
+epsilon = 0.1
 
+###############################################
 TT = 20
 
 Nx = 32
@@ -28,18 +35,12 @@ x = np.arange(0,Lx,dx)
 global k
 k = np.fft.fftfreq(Nx,dx)*(2*np.pi)
 
-#Specify a hyperviscosity to apply:
-global visc
-#visc = 1e-4
+# Specify the hyperviscosity coefficient, if using
+# Most cases are fine without hyperviscosity,
+# so the default is 0.
 visc = 0
 
-##################################################################
-# Specify a level of time-scale separation
-global epsilon
-epsilon = 0.1
-
 #Calculate the linear dispersion relation:
-global omega
 omega = np.sqrt(1 + (k**2))
 
 #Apply the time-scale separation for the linear term
@@ -55,7 +56,7 @@ init_b = 0*x
 # Now, we transform by a factor of omega:
 init_hat = np.array([np.fft.fft(init_a)*omega,np.fft.fft(init_b)])
 
-# Tolerance for iterating the initial condition:
+# Tolerance for the mean correction initial condition iteration
 Ctol = 1e-10
 
 ############################################################
@@ -68,7 +69,7 @@ a_analytical = np.load(f'reference_solutions/KG/KG_ref_sol_eps{epsilon}.npy')
 
 # Parameters for the averaging kernel
 K_min = 21
-P = 4
+ppp = 4 # averaging points per period
 
 # Define the range of step sizes to examine:
 DTs = np.array([1]) #np.array([1,1.5,2,2.5,3])
@@ -86,7 +87,6 @@ for q in np.arange(len(DTs)):
     dt = DTs[q]
     print('dt = {}'.format(dt))
     
-
     t = np.arange(0,TT,dt) 
 
     ###########################################################
@@ -105,8 +105,9 @@ for q in np.arange(len(DTs)):
         zeta = zetas[j]
         eta = zeta*dt
         
-        #Set the required number of kernel points.
-        K_an = np.ceil(eta*P*16.03/(epsilon*2*np.pi))
+        # Set the required number of kernel points.
+        # 16.03 is the maximum oscillatory eigenvalue
+        K_an = np.ceil(eta*ppp*16.03/(epsilon*2*np.pi))
         K = np.int(max(K_an,K_min))
         print('zeta={}, K = {}'.format(zeta,K))
         
