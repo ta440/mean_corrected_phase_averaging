@@ -1,0 +1,175 @@
+# -*- coding: utf-8 -*-
+"""
+
+Tests for the 1d RSWEs
+Comparing:
+1) standard phase-averaging
+2) Mean corrected phase-averaging with a local mean correction
+
+Pick the value of epsilon (the speed of linear oscillations)
+and a single time step to compare at. 
+Define the range of normalised averaging windows.
+Then, store the results and make a Peddle Plot.
+
+@author: timmo
+"""
+
+import numpy as np
+from matplotlib import pyplot as plt
+import scipy
+from functions.timestepping import *
+from functions.rswes_functions import *
+
+##################################################################
+# Define the level of time-scale separation.
+# Values of 0.5,0.1,0.05,0.01, 0.001 are used in the paper.
+epsilon = 0.1
+
+# Set a single large timestep size. 
+# Values of 0.05, 0.1, ... 0.35 are used in the paper.
+dt = 0.2
+
+ic_type = 'Gaussian'
+
+##########################################
+# Setup parameters:
+
+dt = 0.2
+TT = 10
+t = np.arange(0,TT,dt) 
+
+Nx = 32
+Lx = 2*np.pi
+dx = Lx/Nx
+x = np.arange(0,Lx,dx)  
+
+X,T = np.meshgrid(x,t)
+
+#####################################
+
+k = np.fft.fftfreq(Nx,dx)*(2*np.pi)
+
+# Create a de-aliasing array with top 2/3 of wavenumbers set to zero:
+k_max = np.max(np.abs(k))
+
+# Specify the strength of the 
+# fourth-order hyperviscosity.
+visc = 1e-4
+
+# Nondimensional dispersion relation
+psi = np.sqrt((1 + (k**2)))
+
+# Time independent part of the matrix exponential
+A = np.array([[psi/psi,(-1/psi),(1j*k/psi)],
+             [(1/psi), (1/psi**2),(1j*k/(psi**2))],
+             [(1j*k/psi),(1j*k/(psi**2)), (1/(psi**2))]])
+
+###############################################################
+# Initial condition
+init = set_RSWE_initial_conditions(x, ic_type)
+
+# Transform IC into spectral space
+init_spec = np.fft.fft(init)
+
+# Tolerance for the mean correction initial condition iteration
+Ctol = 1e-10
+
+############################################################
+# Base solution to compare errors relative to:
+
+# Ref sol time step size
+dt_b = 1e-2
+
+U_analyt = np.load(f'reference_solutions/rswes/rswes_{ic_type}_eps{epsilon}.npy')
+
+# Indices to compare with reference solution:
+t_b = np.arange(0,TT+dt_b,dt_b)
+inds = np.arange(0,len(t_b),int(np.rint(dt/dt_b)))
+inds = np.asarray(inds)
+
+if len(inds) != len(t):
+    inds = inds[:-1]
+
+# Parameters for the timestepping averaging kernel
+K_min = 21 # Minimum number of sample points
+ppp = 4 # averaging points per period
+alpha = 4 # Kernel decay rate
+
+# Range of phase-averaging windows for timestepping
+zetas = np.arange(0.3, 1.5)
+
+# Range of phase-averaging windows for the local mean correction
+etas_C = np.arange(0.5, 10)
+
+# Solutions to save errors in 
+C_errs = np.zeros(len(zetas))
+D_errs = np.zeros(len(etas_C))
+
+print(U_analyt.shape)
+
+U_analyt = U_analyt[:, inds, :]   
+
+u_analyt = U_analyt[0,:]
+v_analyt = U_analyt[0,:]
+phi_analyt = U_analyt[0,:]
+
+################################################################
+
+###################################################################
+# Loop over the phase-averaged methods with the different 
+# averaging window sizes
+# The mean corrected method uses eta=eta_C to
+# reduce the size of the parameter space.
+
+for j in np.arange(len(zetas)):
+    zeta = zetas[j]
+    zeta = np.round(zeta,3)
+    print(zeta)    
+    
+    eta = zeta*dt
+    eta = np.round(eta,3)
+    
+    #Set the required number of kernel points.
+    K_an = np.ceil(ppp*eta*np.max(psi)/(epsilon*2*np.pi))
+    K = int(max(K_an,K_min))
+    print('zeta={}, K = {}'.format(zeta,K))
+
+    #Construct the kernel
+    global kernel
+    s_vals, kernel = kernel_vals(K, eta, alpha)    
+
+    mod_specs = np.asarray(RK4(etL_dot_N_aved,init_spec, t, dt, [kernel, s_vals, K, A, psi, k, visc, epsilon]))
+
+    u_solv = np.real(np.fft.ifft(mod_specs[:,0,:]))
+    v_solv = np.real(np.fft.ifft(mod_specs[:,1,:]))
+    phi_solv = np.real(np.fft.ifft(mod_specs[:,2,:]))
+
+    u_specs = np.asarray(V_to_U(t,init_spec, mod_specs, [A, psi, k, eps]))
+
+    u_solu = np.real(np.fft.ifft(u_specs[:,0,:]))
+    v_solu= np.real(np.fft.ifft(u_specs[:,1,:]))
+    phi_solu = np.real(np.fft.ifft(u_specs[:,2,:]))
+
+    #Compute errors relative to the saved analytical solution:
+    u_err = np.sum(np.abs(u_solu-u_analyt),axis=1)
+    v_err = np.sum(np.abs(v_solu-v_analyt),axis=1)
+    phi_err = np.sum(np.abs(phi_solu-phi_analyt),axis=1)
+
+
+    #Sum of L2 errors:
+    tot_err = np.sum(np.sqrt(u_err**2 + v_err**2 + phi_err**2))/len(t_range)
+
+    C_errs[j] = tot_err
+
+C_best = np.nanmin(C_errs)
+C_zeta_opt = zetas[np.nanargmin(C_errs)]
+
+print('C best error is, ', C_best)
+print('C best normalised window is, ', C_zeta_opt)
+
+#Or, a normalised version (eta/DT):
+plt.figure()
+plt.plot(zetas,C_errs)
+plt.xlabel('Normalised averaging window, \u03b6 = \u03b7/\u0394t')
+plt.ylabel('L2 Error')
+plt.title('Peddle plot, Gaussian ICs, \u0394t = {}, \u03b5 = {}'.format(dt,epsilon))
