@@ -20,6 +20,7 @@ def RK4(f,init,t,h,*pars):
     x = [init]
     Ns = [init]
     for i in range(n):
+        #print(t[i])
         x_new = RK4_step(f,x[i],t[i],h,*pars)
         x.append(x_new)
     return x
@@ -35,3 +36,10 @@ def kernel_vals(K, eta, alpha):
     #Shift the s axis:
     s_r = (s-0.5)*eta
     return s_r, k_vals
+
+# Matrix exponential operation on a vector
+def etL_dot(E,V):
+    c0 = E[0,0,:]*V[0,:] + E[0,1,:]*V[1,:] + E[0,2,:]*V[2,:]
+    c1 = E[1,0,:]*V[0,:] + E[1,1,:]*V[1,:] + E[1,2,:]*V[2,:]
+    c2 = E[2,0,:]*V[0,:] + E[2,1,:]*V[1,:] + E[2,2,:]*V[2,:]
+    return np.array([c0,c1,c2])

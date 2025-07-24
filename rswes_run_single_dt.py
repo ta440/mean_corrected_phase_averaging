@@ -23,18 +23,17 @@ from functions.rswes_functions import *
 ##################################################################
 # Define the level of time-scale separation.
 # Values of 0.5,0.1,0.05,0.01, 0.001 are used in the paper.
-epsilon = 0.1
+epsilon = 0.05
 
 # Set a single large timestep size. 
 # Values of 0.05, 0.1, ... 0.35 are used in the paper.
 dt = 0.2
 
-ic_type = 'Gaussian'
+ic_type = 'Gaussian_mean_shift'
 
 ##########################################
 # Setup parameters:
 
-dt = 0.2
 TT = 10
 t = np.arange(0,TT,dt) 
 
@@ -92,14 +91,18 @@ if len(inds) != len(t):
 
 # Parameters for the timestepping averaging kernel
 K_min = 21 # Minimum number of sample points
+KC_min = 21 # Minimum kernel points for the mean correction
 ppp = 4 # averaging points per period
 alpha = 4 # Kernel decay rate
 
 # Range of phase-averaging windows for timestepping
 zetas = np.arange(0.05, 2.0, 0.05)
+#zetas = np.arange(0.3, 1.5, 0.3)
+#zetas = np.array([1.2])
 
 # Range of phase-averaging windows for the local mean correction
-etas_C = np.arange(0.5, 10)
+#etas_C = np.arange(3, 15, 3)
+etas_C = np.arange(epsilon, 30*epsilon, epsilon)
 
 # Solutions to save errors in 
 C_errs = np.zeros(len(zetas))
@@ -121,8 +124,8 @@ phi_analyt = U_analyt[2,:]
 # The mean corrected method uses eta=eta_C to
 # reduce the size of the parameter space.
 
-for j in np.arange(len(zetas)):
-    zeta = zetas[j]
+for m in np.arange(len(zetas)):
+    zeta = zetas[m]
     zeta = np.round(zeta,3)
     print(zeta)    
     
@@ -132,6 +135,11 @@ for j in np.arange(len(zetas)):
     #Set the required number of kernel points.
     K_an = np.ceil(ppp*eta*np.max(psi)/(epsilon*2*np.pi))
     K = int(max(K_an,K_min))
+
+    #If KC is odd, make it even
+    if (K%2):
+        K = K + 1
+
     print(f'zeta={zeta}, eta={eta}, K = {K} \n')
 
     # Construct the kernel
@@ -160,7 +168,7 @@ for j in np.arange(len(zetas)):
     #Sum of L2 errors:
     tot_err = np.sum(np.sqrt(u_err**2 + v_err**2 + phi_err**2))/len(t)
 
-    C_errs[j] = tot_err
+    C_errs[m] = tot_err
 
 C_best = np.nanmin(C_errs)
 C_zeta_opt = zetas[np.nanargmin(C_errs)]
@@ -174,5 +182,90 @@ plt.plot(zetas,C_errs)
 plt.xlabel('Normalised averaging window, \u03b6 = \u03b7/\u0394t')
 plt.ylabel('L2 Error')
 plt.title('Peddle plot, Gaussian ICs, \u0394t = {}, \u03b5 = {}'.format(dt,epsilon))
+
+##################################################
+# Now, loop over mean correction:
+
+# Set the averaging window to be the best, and 
+# generate this kernel.
+C_eta = np.round(C_zeta_opt*dt,3)
+s_vals, kernel = kernel_vals(K, C_eta, alpha)    
+
+for m in np.arange(len(etas_C)):
+    
+    eta_C = etas_C[m]
+    eta_C = np.round(eta_C,3)
+    
+    #Set the required number of kernel points.
+    KC_an = np.ceil(ppp*eta_C*np.max(psi)/(epsilon*2*np.pi))
+    KC = int(max(KC_an,KC_min))
+    
+    #If KC is odd, make it even
+    if (KC%2):
+        KC = KC + 1
+
+    print(f'eta_C={eta_C}, KC={KC} \n')
+
+    #Construct the kernel
+    global kernel_C, s_vals_C
+    s_vals_C, kernel_C = kernel_vals(KC, eta_C, alpha)    
+
+    #################################################
+    # Hmm, double check this .... ... .. .
+    e_sL_ave = np.zeros((3,3,Nx),dtype='complex128')
+    eC_sL_ave = np.zeros((3,3,Nx),dtype='complex128')
+    
+    for q in np.arange(K):
+        s = s_vals[q]
+        B = B_mat(s, [psi, k, epsilon])
+        e_sL_ave += kernel[q]*np.multiply(A,B)
+        
+    for q in np.arange(KC):
+        s = s_vals_C[q]
+        B = B_mat(s, [psi, k, epsilon])
+        eC_sL_ave += kernel_C[q]*np.multiply(A,B)
+
+    #############################################
+
+    meancor_args = [kernel, s_vals, K, kernel_C, s_vals_C, KC, A, psi, k, visc, epsilon, e_sL_ave]
+    C_vals, U_specs, W_specs = mean_cor_phase_aved_RK4(init_spec,t,dt, meancor_args)
+
+    U_specs = np.asarray(U_specs)
+    
+    U_u = np.real(np.fft.ifft(U_specs[:,0,:]))
+    U_v = np.real(np.fft.ifft(U_specs[:,1,:]))
+    U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
+
+    #Compute errors relative to these analytical expressions:
+    u_err = np.sum(np.abs(U_u-u_analyt),axis=1)
+    v_err = np.sum(np.abs(U_v-v_analyt),axis=1)
+    phi_err = np.sum(np.abs(U_phi-phi_analyt),axis=1)
+    
+    #Sum of L2 errors:
+    tot_err = np.sum(np.sqrt(u_err**2 + v_err**2 + phi_err**2))/len(t)
+
+    D_errs[m] = tot_err
+
+D_best = np.nanmin(D_errs)
+D_eta_opt = etas_C[np.nanargmin(D_errs)]
+
+#Or, a normalised version (eta/DT):
+plt.figure()
+plt.plot(etas_C,D_errs)
+plt.xlabel('Normalised averaging window (eta/DT)')
+plt.ylabel('L2 Error')
+plt.title('Normalised RSWE Peddle plot for eta_C, Gaussian, dt=1, eps=0.1')
+
+plt.figure()
+plt.semilogy(etas_C,D_errs)
+plt.xlabel('Normalised averaging window (eta/DT)')
+plt.ylabel('L2 Error')
+plt.title('Normalised RSWE Peddle plot for eta_C, Gaussian, dt=1, eps=0.1')
+
+print('C best error is, ', C_best)
+print('C best normalised window (zeta) is, ', C_zeta_opt)
+
+print('D best error is, ', D_best)
+print('D best averaging window (eta) is, ', D_eta_opt)
 
 plt.show()
