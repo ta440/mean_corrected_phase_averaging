@@ -96,7 +96,7 @@ ppp = 4 # averaging points per period
 alpha = 4 # Kernel decay rate
 
 # Range of phase-averaging windows for timestepping
-zetas = np.arange(0.3, 1.5)
+zetas = np.arange(0.05, 2.0, 0.05)
 
 # Range of phase-averaging windows for the local mean correction
 etas_C = np.arange(0.5, 10)
@@ -110,8 +110,8 @@ print(U_analyt.shape)
 U_analyt = U_analyt[:, inds, :]   
 
 u_analyt = U_analyt[0,:]
-v_analyt = U_analyt[0,:]
-phi_analyt = U_analyt[0,:]
+v_analyt = U_analyt[1,:]
+phi_analyt = U_analyt[2,:]
 
 ################################################################
 
@@ -132,32 +132,33 @@ for j in np.arange(len(zetas)):
     #Set the required number of kernel points.
     K_an = np.ceil(ppp*eta*np.max(psi)/(epsilon*2*np.pi))
     K = int(max(K_an,K_min))
-    print('zeta={}, K = {}'.format(zeta,K))
+    print(f'zeta={zeta}, eta={eta}, K = {K} \n')
 
-    #Construct the kernel
-    global kernel
+    # Construct the kernel
     s_vals, kernel = kernel_vals(K, eta, alpha)    
 
-    mod_specs = np.asarray(RK4(etL_dot_N_aved,init_spec, t, dt, [kernel, s_vals, K, A, psi, k, visc, epsilon]))
+    V_specs = np.asarray(RK4(etL_dot_N_aved, init_spec, t, dt, [kernel, s_vals, K, A, psi, k, visc, epsilon]))
 
-    u_solv = np.real(np.fft.ifft(mod_specs[:,0,:]))
-    v_solv = np.real(np.fft.ifft(mod_specs[:,1,:]))
-    phi_solv = np.real(np.fft.ifft(mod_specs[:,2,:]))
+    # Components of the modulation variable solution
+    V_u = np.real(np.fft.ifft(V_specs[:,0,:]))
+    V_v = np.real(np.fft.ifft(V_specs[:,1,:]))
+    V_phi = np.real(np.fft.ifft(V_specs[:,2,:]))
 
-    u_specs = np.asarray(V_to_U(t,init_spec, mod_specs, [A, psi, k, eps]))
+    # Convert back to the standard variable
+    #Now, get the proper solution variables.
+    U_specs = np.asarray(V_to_U(t, init_spec, V_specs, [A, psi, k, epsilon]))
 
-    u_solu = np.real(np.fft.ifft(u_specs[:,0,:]))
-    v_solu= np.real(np.fft.ifft(u_specs[:,1,:]))
-    phi_solu = np.real(np.fft.ifft(u_specs[:,2,:]))
+    U_u = np.real(np.fft.ifft(U_specs[:,0,:]))
+    U_v = np.real(np.fft.ifft(U_specs[:,1,:]))
+    U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
 
     #Compute errors relative to the saved analytical solution:
-    u_err = np.sum(np.abs(u_solu-u_analyt),axis=1)
-    v_err = np.sum(np.abs(v_solu-v_analyt),axis=1)
-    phi_err = np.sum(np.abs(phi_solu-phi_analyt),axis=1)
-
+    u_err = np.sum(np.abs(U_u-u_analyt),axis=1)
+    v_err = np.sum(np.abs(U_v-v_analyt),axis=1)
+    phi_err = np.sum(np.abs(U_phi-phi_analyt),axis=1)
 
     #Sum of L2 errors:
-    tot_err = np.sum(np.sqrt(u_err**2 + v_err**2 + phi_err**2))/len(t_range)
+    tot_err = np.sum(np.sqrt(u_err**2 + v_err**2 + phi_err**2))/len(t)
 
     C_errs[j] = tot_err
 
@@ -173,3 +174,5 @@ plt.plot(zetas,C_errs)
 plt.xlabel('Normalised averaging window, \u03b6 = \u03b7/\u0394t')
 plt.ylabel('L2 Error')
 plt.title('Peddle plot, Gaussian ICs, \u0394t = {}, \u03b5 = {}'.format(dt,epsilon))
+
+plt.show()
