@@ -23,13 +23,13 @@ from functions.rswes_functions import *
 ##################################################################
 # Define the level of time-scale separation.
 # Values of 0.5,0.1,0.05,0.01, 0.001 are used in the paper.
-epsilon = 0.05
+epsilon = 0.001
 
 # Set a single large timestep size. 
 # Values of 0.05, 0.1, ... 0.35 are used in the paper.
 dt = 0.2
 
-ic_type = 'Gaussian_mean_shift'
+ic_type = 'Gaussian_mean_shift2'
 
 ##########################################
 # Setup parameters:
@@ -96,13 +96,14 @@ ppp = 4 # averaging points per period
 alpha = 4 # Kernel decay rate
 
 # Range of phase-averaging windows for timestepping
-zetas = np.arange(0.05, 2.0, 0.05)
+zetas = np.arange(0.05, 1.0, 0.05)
+#zetas = np.arange(0.05, 1.05, 0.05)
 #zetas = np.arange(0.3, 1.5, 0.3)
-#zetas = np.array([1.2])
+#zetas = np.array([0.2])
 
 # Range of phase-averaging windows for the local mean correction
 #etas_C = np.arange(3, 15, 3)
-etas_C = np.arange(epsilon, 30*epsilon, epsilon)
+etas_C = np.arange(epsilon, 10*epsilon, epsilon)
 
 # Solutions to save errors in 
 C_errs = np.zeros(len(zetas))
