@@ -27,15 +27,16 @@ epsilon = 0.1
 
 # Set a single large timestep size. 
 # Values of 0.05, 0.1, ... 0.35 are used in the paper.
-dt = 0.2
+dt = 0.3
 
-ic_type = 'Gaussian'
+ic_type = 'Gaussian_mean_shift'
+
+longer_time = False
+
+TT = 10
 
 ##########################################
 # Setup parameters:
-
-dt = 0.2
-TT = 10
 t = np.arange(0,TT,dt) 
 
 Nx = 32
@@ -71,16 +72,16 @@ init = set_RSWE_initial_conditions(x, ic_type)
 # Transform IC into spectral space
 init_spec = np.fft.fft(init)
 
-# Tolerance for the mean correction initial condition iteration
-Ctol = 1e-10
-
 ############################################################
 # Base solution to compare errors relative to:
 
 # Ref sol time step size
 dt_b = 1e-2
 
-U_analyt = np.load(f'reference_solutions/rswes/rswes_{ic_type}_eps{epsilon}.npy')
+if longer_time:
+    U_analyt = np.load(f'reference_solutions/rswes/rswes_{ic_type}_eps{epsilon}_TT{TT}.npy')
+else:
+    U_analyt = np.load(f'reference_solutions/rswes/rswes_{ic_type}_eps{epsilon}.npy')
 
 # Indices to compare with reference solution:
 t_b = np.arange(0,TT+dt_b,dt_b)
@@ -96,14 +97,10 @@ ppp = 4 # averaging points per period
 alpha = 4 # Kernel decay rate
 
 # Range of phase-averaging windows for timestepping
-zetas = np.arange(0.05, 2.0, 0.05)
-
-# Range of phase-averaging windows for the local mean correction
-etas_C = np.arange(0.5, 10)
+zetas = np.arange(0.05, 2.5, 0.05)
 
 # Solutions to save errors in 
 C_errs = np.zeros(len(zetas))
-D_errs = np.zeros(len(etas_C))
 
 print(U_analyt.shape)
 
@@ -176,3 +173,5 @@ plt.ylabel('L2 Error')
 plt.title('Peddle plot, Gaussian ICs, \u0394t = {}, \u03b5 = {}'.format(dt,epsilon))
 
 plt.show()
+
+print(C_errs)

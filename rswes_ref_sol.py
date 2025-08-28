@@ -2,6 +2,8 @@
 Generate reference solutions for the 1d rswes,
 which can then be used to compute errors with
 the phase-averaged methods.
+
+This uses the modulation variable method.
 '''
 
 import numpy as np
@@ -12,14 +14,19 @@ from functions.rswes_functions import *
 ##################################################################
 # Define the level of time-scale separation.
 # Values of 0.5,0.1,0.05,0.01, 0.001 are used in the paper.
-global epsilon
-epsilon = 0.1
+epsilon = 0.5
+
+ic_type = 'Gaussian_mean_shift'
+
+save = True
+
+longer_time = True
+TT = 20
 
 ##########################################
 # Setup parameters:
 
-dt = 0.01
-TT = 10
+dt = 0.0001
 t = np.arange(0,TT,dt) 
 
 Nx = 32
@@ -49,7 +56,17 @@ A = np.array([[psi/psi,(-1/psi),(1j*k/psi)],
 
 ###############################
 # Initial condition
-init = set_RSWE_initial_conditions(x, 'Gaussian')
+init = set_RSWE_initial_conditions(x, ic_type)
+
+#print(np.max(init[2,:]))
+
+plt.figure()
+plt.plot(x, init[2,:])
+plt.xlabel('x')
+plt.title('Symmetrical geopotential height')
+plt.title(f'{ic_type} initial condition')
+
+#plt.show()
 
 # Transform IC into spectral space
 init_spec = np.fft.fft(init)
@@ -64,11 +81,11 @@ V_phi = np.real(np.fft.ifft(V_specs[:,2,:]))
 
 # Convert back to the standard variable
 #Now, get the proper solution variables.
-u_specs = np.asarray(V_to_U(t, init_spec, V_specs, [A, psi, k, epsilon]))
+U_specs = np.asarray(V_to_U(t, init_spec, V_specs, [A, psi, k, epsilon]))
 
-U_u = np.real(np.fft.ifft(u_specs[:,0,:]))
-U_v = np.real(np.fft.ifft(u_specs[:,1,:]))
-U_phi = np.real(np.fft.ifft(u_specs[:,2,:]))
+U_u = np.real(np.fft.ifft(U_specs[:,0,:]))
+U_v = np.real(np.fft.ifft(U_specs[:,1,:]))
+U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
 
 
 ######################################
@@ -104,6 +121,7 @@ plt.suptitle('1D Gaussian, \u03b5 = {}'.format(epsilon))
 
 plt.show()
 
+print(np.shape(U_u))
 
 #################################
 # Save the solution array
@@ -116,11 +134,16 @@ inds = np.arange(0,len(t),int(np.rint(dt_coarse/dt)))
 inds = np.asarray(inds)
 
 # Array to store the solutions
-ref_sol = np.zeros((3,Nx,len(t_coarse)))
-ref_sol[0,:,:] = U_u[:,inds]
-ref_sol[1,:,:] = U_v[:,inds]
-ref_sol[2,:,:] = U_phi[:,inds]
+ref_sol = np.zeros((3,len(t_coarse), Nx))
+ref_sol[0,:,:] = U_u[inds,:]
+ref_sol[1,:,:] = U_v[inds, :]
+ref_sol[2,:,:] = U_phi[inds, :]
 
-savename = f'reference_solutions/rswes/rswes_eps{epsilon}.npy'
+if longer_time:
+    savename = f'reference_solutions/rswes/rswes_{ic_type}_eps{epsilon}_TT{TT}.npy'
+else:
+    savename = f'reference_solutions/rswes/rswes_{ic_type}_eps{epsilon}.npy'
 
-np.save(savename, ref_sol)
+if save:
+    print(f'Saving reference solution to {savename}')
+    np.save(savename, ref_sol)

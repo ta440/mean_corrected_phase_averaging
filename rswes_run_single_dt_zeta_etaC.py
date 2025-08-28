@@ -29,17 +29,17 @@ epsilon = 0.1
 
 # Set a single large timestep size. 
 # Values of 0.05, 0.1, ... 0.35 are used in the paper.
-dt = 0.2
+dt = 0.1
 
 ic_type = 'Gaussian_mean_shift'
 
 longer_time = True
 
-TT = 20
+TT = 50
 
 # Pick averaging window sizes:
-zeta = 1.3
-eta_C = 2.5
+zeta = 0.7
+eta_C = 1.4
 
 ##########################################
 # Setup parameters:
@@ -142,17 +142,16 @@ V_phi = np.real(np.fft.ifft(V_specs[:,2,:]))
 #Now, get the proper solution variables.
 U_specs = np.asarray(V_to_U(t, init_spec, V_specs, [A, psi, k, epsilon]))
 
-U_u = np.real(np.fft.ifft(U_specs[:,0,:]))
-U_v = np.real(np.fft.ifft(U_specs[:,1,:]))
-U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
+C_U_u = np.real(np.fft.ifft(U_specs[:,0,:]))
+C_U_v = np.real(np.fft.ifft(U_specs[:,1,:]))
+C_U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
 
-#Compute errors relative to the saved analytical solution:
-u_err = np.sum(np.abs(U_u-u_analyt),axis=1)
-v_err = np.sum(np.abs(U_v-v_analyt),axis=1)
-phi_err = np.sum(np.abs(U_phi-phi_analyt),axis=1)
-
-#Sum of L2 errors:
-C_err = np.sqrt(u_err**2 + v_err**2 + phi_err**2)
+# Compute errors relative to the saved analytical solution:
+C_u_err = np.sqrt(np.sum((C_U_u-u_analyt)**2,axis=1))
+C_v_err = np.sqrt(np.sum((C_U_v-v_analyt)**2,axis=1))
+C_phi_err = np.sqrt(np.sum((C_U_phi-phi_analyt)**2,axis=1))
+# Sum the component errors:
+C_err = C_u_err + C_v_err + C_phi_err
 
 ##################################################
 # Mean correction:
@@ -194,21 +193,111 @@ C_vals, U_specs, W_specs = mean_cor_phase_aved_RK4(init_spec,t,dt, meancor_args)
 
 U_specs = np.asarray(U_specs)
 
-U_u = np.real(np.fft.ifft(U_specs[:,0,:]))
-U_v = np.real(np.fft.ifft(U_specs[:,1,:]))
-U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
+D_U_u = np.real(np.fft.ifft(U_specs[:,0,:]))
+D_U_v = np.real(np.fft.ifft(U_specs[:,1,:]))
+D_U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
 
-#Compute errors relative to these analytical expressions:
-u_err = np.sum(np.abs(U_u-u_analyt),axis=1)
-v_err = np.sum(np.abs(U_v-v_analyt),axis=1)
-phi_err = np.sum(np.abs(U_phi-phi_analyt),axis=1)
+# Compute errors relative to the saved analytical solution:
+D_u_err = np.sqrt(np.sum((D_U_u-u_analyt)**2,axis=1))
+D_v_err = np.sqrt(np.sum((D_U_v-v_analyt)**2,axis=1))
+D_phi_err = np.sqrt(np.sum((D_U_phi-phi_analyt)**2,axis=1))
+# Sum the component errors:
+D_err = D_u_err + D_v_err + D_phi_err
 
-#Sum of L2 errors:
-D_err = np.sqrt(u_err**2 + v_err**2 + phi_err**2)
-
-# Plot the errors over time
+# Plot the total errors over time
 plt.figure()
-plt.plot(t, C_err, label='Standard phase-averaging')
-plt.plot(t, D_err, label='Mean corrected')
+plt.plot(t, C_err, label='Standard phase-averaging', c='b')
+plt.plot(t, D_err, label='Mean corrected', c='r')
+plt.xlabel('Time', size=14)
+plt.ylabel('Sum of L2 component errors', size=14)
+plt.title(f'Comparing total error over time, dt={dt}, eps={epsilon}')
+plt.legend(fontsize=14)
+plt.xticks(size=12)
+plt.yticks(size=12)
+
+
+plt.figure()
+plt.plot(t, C_err, label='Standard phase-averaging', c='b')
+plt.plot(t, D_err, label='Mean corrected', c='r')
+plt.xlabel('Time', size=14)
+plt.ylabel('Solution error', size=14)
+plt.legend(fontsize=12)
+plt.xticks(size=12)
+plt.yticks(size=12)
+
+savename = f'figures/rswes_error_over_time_eps{epsilon}_dt{dt}.png'
+plt.savefig(savename, bbox_inches="tight")
+print('saving to ', savename)
+
+plt.figure()
+plt.plot(t, C_u_err, label='Standard phase-averaging')
+plt.plot(t, D_u_err, label='Mean corrected')
+plt.xlabel('Time')
+plt.ylabel('u error')
+plt.title(f'Comparing errors over time, dt={dt}, eps={epsilon}')
+plt.legend()
+
+plt.figure()
+plt.plot(t, C_v_err, label='Standard phase-averaging')
+plt.plot(t, D_v_err, label='Mean corrected')
+plt.xlabel('Time')
+plt.ylabel('v error')
+plt.title(f'Comparing errors over time, dt={dt}, eps={epsilon}')
+plt.legend()
+
+
+
+# Just geopotential error
+plt.figure()
+plt.plot(t, C_phi_err, label='Standard phase-averaging')
+plt.plot(t, D_phi_err, label='Mean corrected')
+plt.xlabel('Time')
+plt.ylabel('Geopotential error')
+plt.title(f'Comparing geopotential error over time, dt={dt}, eps={epsilon}')
+plt.legend()
+
+print('% Total error difference:', (np.sum(C_err)-np.sum(D_err))/np.sum(C_err))
+print('Final error difference: ', (C_err[-1]-D_err[-1])/C_err[-1])
+
+# Plot the geopotential solutions to see if there is a phase shift 
+fig, (ax1,ax2,ax3) = plt.subplots(3,1)
+fig1 = ax1.contourf(T,X,phi_analyt)
+ax1.set_ylabel('Analytical')
+plt.colorbar(fig1,ax=ax1)
+fig2 = ax2.contourf(T,X,C_U_phi)
+ax2.set_ylabel('Standard phase-averaging')
+plt.colorbar(fig2,ax=ax2)
+fig3 = ax3.contourf(T,X,D_U_phi)
+ax3.set_ylabel('Mean corrected')
+ax3.set_xlabel('Time')
+plt.colorbar(fig3,ax=ax3)
+plt.suptitle('Comparing geopotential Solutions')
+
+fig, (ax1,ax2) = plt.subplots(2,1)
+fig1 = ax1.contourf(T,X,np.abs(u_analyt - C_U_u))
+ax1.set_ylabel('Standard phase-averaging')
+plt.colorbar(fig1,ax=ax1)
+fig2 = ax2.contourf(T,X,np.abs(u_analyt - D_U_u))
+ax2.set_ylabel('Mean corrected')
+plt.colorbar(fig2,ax=ax2)
+plt.suptitle('u error')
+
+fig, (ax1,ax2) = plt.subplots(2,1)
+fig1 = ax1.contourf(T,X,np.abs(v_analyt - C_U_v))
+ax1.set_ylabel('Standard phase-averaging')
+plt.colorbar(fig1,ax=ax1)
+fig2 = ax2.contourf(T,X,np.abs(v_analyt - D_U_v))
+ax2.set_ylabel('Mean corrected')
+plt.colorbar(fig2,ax=ax2)
+plt.suptitle('v error')
+
+fig, (ax1,ax2) = plt.subplots(2,1)
+fig1 = ax1.contourf(T,X,np.abs(phi_analyt - C_U_phi))
+ax1.set_ylabel('Standard phase-averaging')
+plt.colorbar(fig1,ax=ax1)
+fig2 = ax2.contourf(T,X,np.abs(phi_analyt - D_U_phi))
+ax2.set_ylabel('Mean corrected')
+plt.colorbar(fig2,ax=ax2)
+plt.suptitle('Geopotential error')
 
 plt.show()

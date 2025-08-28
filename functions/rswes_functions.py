@@ -19,13 +19,18 @@ def set_RSWE_initial_conditions(x_grid, IC):
       u_0 = 0*x_grid
       v_0 = 0*x_grid
       phi_0 = np.exp(-((x_grid-np.pi)**2)/2)  - scipy.special.erf(np.pi/np.sqrt(2))/np.sqrt(2*np.pi)
+  elif IC == 'Gaussian_mean_shift2':
+      u_0 = 0*x_grid
+      v_0 = 0*x_grid
+      c0 = scipy.special.erf(np.pi/np.sqrt(2))/np.sqrt(2*np.pi)
+      phi_0 = (1/(1-c0))*(np.exp(-((x_grid-np.pi)**2)/2)  - c0)
   elif IC == 'Gaussian_meanflow_uv':
       #Gaussian Dam Break::
       u_0 = 0.05*x_grid
       v_0 = 0.05*x_grid
       phi_0 = np.exp(-((x_grid-np.pi)**2)/2) 
   elif IC == 'Terry':
-      #Zero initial velocties over the grid
+      # The initial condition from Haut and Wingate (2014)
       u_0 = 0*x_grid
       v_0 = 0*x_grid
 
