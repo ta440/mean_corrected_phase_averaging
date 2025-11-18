@@ -11,6 +11,12 @@ method and a small time step. There is no phase-averaging here.
 
 import numpy as np
 from matplotlib import pyplot as plt
+
+######################################
+# Import helper functions:
+import sys
+sys.path.append('../')
+
 from functions.timestepping import *
 from functions.KG_functions import *
 
@@ -19,7 +25,7 @@ from functions.KG_functions import *
 # Define the level of time-scale separation.
 # Values of 0.5,0.1,0.05,0.01 are used in the paper.
 global epsilon
-epsilon = 0.01
+epsilon = 0.025
 
 ################################################################
 # Setup parameters:
@@ -83,5 +89,7 @@ U_b = np.real(np.fft.ifft(U[:,1,:]))
 
 ##############################################################
 # Save the reference solution numpy array:
-savename = f'reference_solutions/KG/KG_ref_sol_eps{epsilon}.npy'
+savename = f'../reference_solutions/KG/KG_ref_sol_eps{epsilon}.npy'
+
+print(f'Saving reference solution to {savename}')
 np.save(savename, U_a)

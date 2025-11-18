@@ -11,12 +11,20 @@ Pick the value of epsilon (the speed of linear oscillations)
 and range of timesteps and averaging windows.
 Then, store the results and make a Peddle Plot.
 
+STILL WORKING ON THIS SCRIPT.
+
 @author: timmo
 """
 
 import numpy as np
 from matplotlib import pyplot as plt
 import scipy
+
+######################################
+# Import helper functions:
+import sys
+sys.path.append('../')
+
 from functions.timestepping import *
 from functions.KG_functions import *
 
@@ -65,11 +73,12 @@ Ctol = 1e-10
 # Ref sol time step size
 dt_b = 1e-4
 
-a_analytical = np.load(f'reference_solutions/KG/KG_ref_sol_eps{epsilon}.npy')
+a_analytical = np.load(f'../reference_solutions/KG/KG_ref_sol_eps{epsilon}.npy')
 
 # Parameters for the averaging kernel
 K_min = 21
 ppp = 4 # averaging points per period
+alpha = 4
 
 # Define the range of step sizes to examine:
 DTs = np.array([1]) #np.array([1,1.5,2,2.5,3])
@@ -92,7 +101,7 @@ for q in np.arange(len(DTs)):
     ###########################################################
     #Base error for comparison:
     t_b = np.arange(0,TT+dt_b,dt_b)
-    inds = np.arange(0,len(t_b),np.int(np.rint(dt/dt_b)))
+    inds = np.arange(0,len(t_b),int(np.rint(dt/dt_b)))
     inds = np.asarray(inds)
     
     if len(inds) != len(t):
@@ -108,11 +117,11 @@ for q in np.arange(len(DTs)):
         # Set the required number of kernel points.
         # 16.03 is the maximum oscillatory eigenvalue
         K_an = np.ceil(eta*ppp*16.03/(epsilon*2*np.pi))
-        K = np.int(max(K_an,K_min))
+        K = int(max(K_an,K_min))
         print('zeta={}, K = {}'.format(zeta,K))
         
         global kernel,s_vals
-        s_vals, kernel = kernel_vals(K,eta) 
+        s_vals, kernel = kernel_vals(K,eta, alpha) 
 
         ############################################################
         # 1) Standard phase-averaging

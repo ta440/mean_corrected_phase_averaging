@@ -8,7 +8,7 @@ Comparing:
 3) Mean corrected phase-averaging with a local mean correction
 
 Pick the value of epsilon (the speed of linear oscillations)
-and range of timesteps and averaging windows.
+and range of averaging windows, for a single timestep.
 Then, store the results and make a Peddle Plot.
 
 @author: timmo
@@ -17,6 +17,12 @@ Then, store the results and make a Peddle Plot.
 import numpy as np
 from matplotlib import pyplot as plt
 import scipy
+
+######################################
+# Import helper functions:
+import sys
+sys.path.append('../')
+
 from functions.timestepping import *
 from functions.KG_functions import *
 
@@ -69,7 +75,7 @@ Ctol = 1e-10
 # Ref sol time step size
 dt_b = 1e-4
 
-a_ref = np.load(f'reference_solutions/KG/KG_ref_sol_eps{epsilon}.npy')
+a_ref = np.load(f'../reference_solutions/KG/KG_ref_sol_eps{epsilon}.npy')
 
 # Indices to compare with reference solution:
 t_b = np.arange(0,TT+dt_b,dt_b)
