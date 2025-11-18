@@ -8,25 +8,31 @@ This uses the modulation variable method.
 
 import numpy as np
 from matplotlib import pyplot as plt
+
+######################################
+# Import helper functions:
+import sys
+sys.path.append('../')
+
 from functions.timestepping import *
 from functions.rswes_functions import *
 
-##################################################################
+##########################################
 # Define the level of time-scale separation.
 # Values of 0.5,0.1,0.05,0.01, 0.001 are used in the paper.
-epsilon = 0.5
+epsilon = 0.1
 
 ic_type = 'Gaussian_mean_shift'
 
-save = True
+save = False
 
-longer_time = True
-TT = 20
+longer_time = False
+TT = 10
 
 ##########################################
 # Setup parameters:
 
-dt = 0.0001
+dt = 0.001
 t = np.arange(0,TT,dt) 
 
 Nx = 32
@@ -119,9 +125,23 @@ ax3.set_xlabel('Time')
 plt.colorbar(fig3,ax=ax3)
 plt.suptitle('1D Gaussian, \u03b5 = {}'.format(epsilon))
 
-plt.show()
 
 print(np.shape(U_u))
+
+# Plot just u for graphical abstract:
+fig, ax1 = plt.subplots(1,1, figsize=(10,4))
+plot = ax1.contourf(T,X,U_u)
+ax1.set_ylabel('$x \in [0, 2 \pi)$', size=14)
+ax1.set_xlabel('Time', size=14)
+plt.colorbar(plot)
+
+fig, ax1 = plt.subplots(1,1, figsize=(10,4))
+plot = ax1.contourf(T,X,V_u)
+ax1.set_ylabel('$x \in [0, 2 \pi)$', size=14)
+ax1.set_xlabel('Time', size=14)
+plt.colorbar(plot)
+
+plt.show()
 
 #################################
 # Save the solution array
