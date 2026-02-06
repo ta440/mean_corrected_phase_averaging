@@ -6,6 +6,7 @@ over each of these time intervals.
 '''
 
 import numpy as np
+from os.path import abspath, dirname
 import matplotlib
 from matplotlib import pyplot as plt
 import scipy
@@ -36,7 +37,6 @@ t_ref = np.arange(0, TT + dt_ref, dt_ref)
 c_val = 5
 
 analyt_sol = (1j*c_val*epsilon/omega)*(np.exp(-1j*omega*t_ref/epsilon) - 1) + np.exp(-1j*omega*t_ref/epsilon)*u0
-
 modvar_sol = u0 - (1j*c_val*epsilon/omega)*(np.exp(-1j*omega*t_ref/epsilon) - 1)
 
 # Perform timestepping
@@ -88,7 +88,9 @@ for i in np.arange(len(t)-1):
 
 discrete_modvar_sol = np.exp(-1j*omega*t/epsilon)*v
 phase_aved_sol = np.exp(-1j*omega*t/epsilon)*v_bar
+
 meancor_sol = np.exp(-1j*omega*t/epsilon)*w_bar - epsilon*1j*c_val/omega
+w_sol = np.ones(len(t_ref))*w_bar[0]
 
 # Print errors:
 print('Phase-averaging error is:', np.sum(np.abs(phase_aved_sol - analyt_sol[inds]))/(len(t)-1))
@@ -112,7 +114,25 @@ plt.xlabel('Time', size=14)
 ax1.set_ylabel('Standard Solution', size=14)
 ax2.set_ylabel('Modulation Variable', size=14)
 
-'''
+fig, axes = plt.subplots(2,1,sharex=True, constrained_layout=True)
+ax1, ax2 = axes
+ax1.plot(t_ref, np.real(analyt_sol), label=r"Re($u$)")
+ax1.plot(t_ref, np.imag(analyt_sol), label=r"Im($u$)")
+ax1.plot(t_ref, np.abs(analyt_sol), label=r"|$u$|", c='k')
+ax2.plot(t_ref, np.real(modvar_sol), label=r"Re($v$)")
+ax2.plot(t_ref, np.imag(modvar_sol), label=r"Im($v$)")
+ax2.plot(t_ref, np.abs(modvar_sol), label=r"|$v$|", c='k')
+ax2.plot(t_ref, np.abs(w_sol), label=r"|$w$|", c='lime')
+ax1.legend(loc='center right', prop={'size': 12}, bbox_to_anchor=(1.3, 0.5))
+ax2.legend(loc='center right', prop={'size': 12}, bbox_to_anchor=(1.3, 0.5))
+plt.xlim([0,TT])
+plt.xlabel('Time', size=14)
+ax1.set_ylabel('Standard Solution', size=14)
+ax2.set_ylabel('Modulation Variable', size=14)
+
+fig.savefig(f'{abspath(dirname(__file__))}/figures/simp_example_orig_sols.jpg', bbox_inches='tight')
+
+
 # Just real components of the solution
 fig, axes = plt.subplots(2,1,sharex=True, constrained_layout=True)
 ax1, ax2 = axes
@@ -152,22 +172,23 @@ plt.xlim([0,TT])
 plt.xlabel('Time', size=14)
 ax1.set_ylabel('Standard Solution', size=14)
 ax2.set_ylabel('Modulation Variable', size=14)
-'''
+
 
 fig, axes = plt.subplots(2,1,sharex=True, constrained_layout=True)
 ax1, ax2 = axes
-ax1.plot(t_ref, np.abs(analyt_sol), label=r"abs($u$)", c='k')
+ax1.plot(t_ref, np.abs(analyt_sol), label=r"|$u$|", c='k')
 ax1.plot(t, np.abs(phase_aved_sol), c='b', linestyle='dashed')
-ax1.plot(t, np.abs(meancor_sol), c='r', linestyle='dashed')
-ax1.scatter(t, np.abs(phase_aved_sol), label=r"abs($u_{PA}$)", c='b')
-ax1.scatter(t, np.abs(meancor_sol), label=r"abs($u_{MC}$)", c='r')
-ax2.plot(t_ref, np.abs(modvar_sol), label=r"abs($v$)", c='k')
+ax1.plot(t, np.abs(meancor_sol), c='r', linestyle='dotted')
+ax1.scatter(t, np.abs(phase_aved_sol), label=r"|$u_{PA}$|", c='b')
+ax1.scatter(t, np.abs(meancor_sol), label=r"|$u_{MC}$|", c='r')
+ax2.plot(t_ref, np.abs(modvar_sol), label=r"|$v$|", c='k')
+ax2.plot(t_ref, np.abs(w_sol), label=r"|$w$|", c='lime')
 ax2.plot(t, np.abs(v_bar),c='b', linestyle='dashed')
-ax2.plot(t, np.abs(w_bar), c='r', linestyle='dashed')
-ax2.scatter(t, np.abs(v_bar), label=r"Abs($\overline{v}$)", c='b')
-ax2.scatter(t, np.abs(w_bar), label=r"Abs($\overline{w}$)", c='r')
-ax1.legend(loc='center right', prop={'size': 12}, bbox_to_anchor=(1.35, 0.5))
-ax2.legend(loc='center right', prop={'size': 12}, bbox_to_anchor=(1.3, 0.5))
+ax2.plot(t, np.abs(w_bar), c='r', linestyle='dotted')
+ax2.scatter(t, np.abs(v_bar), label=r"|$\overline{v}$|", c='b')
+ax2.scatter(t, np.abs(w_bar), label=r"|$\overline{w}$|", c='r')
+ax1.legend(loc='center right', prop={'size': 12}, bbox_to_anchor=(1.25, 0.5))
+ax2.legend(loc='center right', prop={'size': 12}, bbox_to_anchor=(1.25, 0.5))
 plt.xlim([0,TT])
 plt.xlabel('Time', size=14)
 ax1.tick_params(labelsize=10)
@@ -175,6 +196,12 @@ ax2.tick_params(labelsize=10)
 ax1.set_ylabel('Standard Solution', size=14)
 ax2.set_ylabel('Modulation Variable', size=14)
 
+fig.savefig(f'{abspath(dirname(__file__))}/figures/simp_example_phase_aved_abs.jpg', bbox_inches='tight')
+
+plt.show()
+
+
+'''
 fig, axes = plt.subplots(2,1,sharex=True, constrained_layout=True)
 ax1, ax2 = axes
 ax1.plot(t_ref, np.abs(analyt_sol), label=r"abs($u$)", c='k')
@@ -199,8 +226,6 @@ ax1.tick_params(labelsize=10)
 ax2.tick_params(labelsize=10)
 ax1.set_ylabel('Standard Solution', size=14)
 ax2.set_ylabel('Modulation Variable', size=14)
-
-plt.show()
 
 fig, axes = plt.subplots(2,1,sharex=True, constrained_layout=True)
 ax1, ax2 = axes
@@ -285,9 +310,8 @@ plt.legend()
 plt.xlabel('Time')
 plt.ylabel('Modvar solution')
 
-# Perform timestepping
+'''
 
-plt.show()
 
 
 
