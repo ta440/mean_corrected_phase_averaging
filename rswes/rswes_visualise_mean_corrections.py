@@ -16,6 +16,12 @@ import numpy as np
 import matplotlib
 from matplotlib import pyplot as plt
 import scipy
+
+######################################
+# Import helper functions:
+import sys
+sys.path.append('../')
+
 from functions.timestepping import *
 from functions.rswes_functions import *
 
@@ -90,9 +96,9 @@ Ctol = 1e-10
 dt_b = 1e-2
 
 if longer_time:
-    U_analyt = np.load(f'reference_solutions/rswes/rswes_{ic_type}_eps{epsilon}_TT{TT}.npy')
+    U_analyt = np.load(f'../reference_solutions/rswes/rswes_{ic_type}_eps{epsilon}_TT{TT}.npy')
 else:
-    U_analyt = np.load(f'reference_solutions/rswes/rswes_{ic_type}_eps{epsilon}.npy')
+    U_analyt = np.load(f'../reference_solutions/rswes/rswes_{ic_type}_eps{epsilon}.npy')
 
 # Indices to compare with reference solution:
 t_b = np.arange(0,TT+dt_b,dt_b)
