@@ -38,7 +38,9 @@ TT = 10
 zeta = 0.95
 
 # Mean correction windows to examine:
-etas_C = [0.8,1.4,2.0]
+# For the paper, use 0.7, 1.4, 2.1
+etas_C = [0.7,1.4,2.1]
+#etas_C=[2,3,4]
 
 ##########################################
 # Setup parameters:
@@ -238,8 +240,8 @@ v_cont_ticks = np.linspace(-v_max,v_max,5)
 phi_cont_ticks = np.linspace(-phi_max,phi_max,5)
 
 cmap = matplotlib.cm.viridis
-cmap.set_under('k')
-cmap.set_over('white')
+#cmap.set_under('k')
+#cmap.set_over('white')
 
 fig, axs = plt.subplots(3,3, figsize=(10,6), sharex=True, sharey=True, constrained_layout=True)
 (ax1,ax2,ax3), (ax4,ax5,ax6), (ax7,ax8,ax9) = axs
@@ -253,9 +255,9 @@ fig7 = ax7.contourf(T,X,C_vals_rec[0,:,2,:], levels=phi_conts, cmap=cmap, extend
 fig8 = ax8.contourf(T,X,C_vals_rec[1,:,2,:], levels=phi_conts, cmap=cmap, extend='both')
 fig9 = ax9.contourf(T,X,C_vals_rec[2,:,2,:], levels=phi_conts, cmap=cmap, extend='both')
 
-ax1.set_ylabel('$u$', size=14)
-ax4.set_ylabel('$v$', size=14)
-ax7.set_ylabel('$\phi$', size=14)
+ax1.set_ylabel('$C_u$', size=14, rotation=0, labelpad=15)
+ax4.set_ylabel('$C_v$', size=14, rotation=0, labelpad=15)
+ax7.set_ylabel('$C_{\phi}$', size=14, rotation=0, labelpad=15)
 
 ax1.set_title(f'$\eta_C={etas_C[0]}$ \n Total error is {errs[0]:.4f}', size=14)
 ax2.set_title(f'$\eta_C={etas_C[1]}$ \n Total error is {errs[1]:.4f}', size=14)
@@ -269,6 +271,7 @@ plt.colorbar(fig9, ax=axs[2, :], pad=0.02, ticks=phi_cont_ticks)
 #plt.colorbar(fig6,ax=ax6)
 #plt.colorbar(fig9,ax=ax9)
 
+fig.supylabel(r"$x \in [0, 2 \pi)$", size=14)
 fig.supxlabel('Time', size=14)
 
 #plt.yticks(size=12)
@@ -278,9 +281,45 @@ ax1.set_xticks([0,2,4,6,8])
 
 plt.subplots_adjust(wspace=0.1, hspace=0.2)
 
-savename = f'figures/mean_cor_visual_eps{epsilon}_dt{dt}.png'
-print('saving figure to ', savename)
-plt.savefig(savename, bbox_inches="tight")
+#savename = f'figures/mean_cor_visual_eps{epsilon}_dt{dt}.png'
+#print('saving figure to ', savename)
+#plt.savefig(savename, bbox_inches="tight")
 
+fig, ax1 = plt.subplots(1,1, figsize=(10,4.5))
+fig = ax1.contourf(T, X, C_vals_rec[0,:,0,:])
+ax1.set_ylabel('$x \in [0, 2 \pi)$', size=14)
+ax1.set_xlabel('Time', size=14)
+plt.colorbar(fig)
+
+#######################
+# What is dC/dt in each instance?
+C_diffs = np.zeros((3,len(t)-1,3,len(x)))
+
+for i in np.arange(len(t)-1):
+    C_diffs[:,i,:,:] = C_vals_rec[:,i+1,:,:] - C_vals_rec[:,i,:,:]
+
+plt.figure()
+plt.plot(np.sum(np.abs(C_diffs[0,:,0,:]),axis=-1), label=r"$\eta_C$ = "+f'{etas_C[0]}')
+plt.plot(np.sum(np.abs(C_diffs[1,:,0,:]),axis=-1), label=r"$\eta_C$ = "+f'{etas_C[1]}')
+plt.plot(np.sum(np.abs(C_diffs[2,:,0,:]),axis=-1), label=r"$\eta_C$ = "+f'{etas_C[2]}')
+plt.title('C u')
+plt.legend()
+
+plt.figure()
+plt.plot(np.sum(np.abs(C_diffs[0,:,1,:]),axis=-1), label=r"$\eta_C$ = "+f'{etas_C[0]}')
+plt.plot(np.sum(np.abs(C_diffs[1,:,1,:]),axis=-1), label=r"$\eta_C$ = "+f'{etas_C[1]}')
+plt.plot(np.sum(np.abs(C_diffs[2,:,1,:]),axis=-1), label=r"$\eta_C$ = "+f'{etas_C[2]}')
+plt.title('C v')
+plt.legend()
+
+plt.figure()
+plt.plot(np.sum(np.abs(C_diffs[0,:,2,:]),axis=-1), label=r"$\eta_C$ = "+f'{etas_C[0]}')
+plt.plot(np.sum(np.abs(C_diffs[1,:,2,:]),axis=-1), label=r"$\eta_C$ = "+f'{etas_C[1]}')
+plt.plot(np.sum(np.abs(C_diffs[2,:,2,:]),axis=-1), label=r"$\eta_C$ = "+f'{etas_C[2]}')
+plt.title('C phi')
+plt.legend()
 
 plt.show()
+
+
+# Figure for the graphical abstract:

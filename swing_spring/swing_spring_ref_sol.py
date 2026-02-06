@@ -17,7 +17,7 @@ from functions.swing_spring_functions import *
 single_sol = True
 
 if single_sol:
-    rho = 1.95
+    rho = 2.3
     rhos = np.array([rho])
 else:
     # Define a range:

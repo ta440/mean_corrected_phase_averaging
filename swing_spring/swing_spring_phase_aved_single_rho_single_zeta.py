@@ -14,17 +14,32 @@ and mean corrected phase-averaging is algorithm D
 '''
 
 import numpy as np
-from functions.timestepping import *
-from functions.swing_spring_functions import *
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 
+######################################
+# Import helper functions:
+import sys
+sys.path.append('../')
+
+from functions.timestepping import *
+from functions.swing_spring_functions import *
+
+##################
+
 ##################
 # Specify the resonance factor
-rho = 2
+# For the paper, plot rho = 2, rho=2.3
+rho = 2.3
 
 # Specify single zeta to use
-zeta = 2.6
+# For rho = 2.0
+# Best zeta for phase-averaged: 1.6
+# Best zeta for mean corrected: 2.6
+# For rho = 2.3
+# Best zeta for phase-averaged: 4.9
+# Best zeta for mean corrected: 3.4
+zeta = 4.9
 
 ###################
 #Parameter values
@@ -71,7 +86,7 @@ inds = np.asarray(inds)
 
 #####################
 # Read in the reference solution:
-an_sol = np.load(f'reference_solutions/swing_spring/swing_spring_rho{rho}.npy')
+an_sol = np.load(f'../reference_solutions/swing_spring/swing_spring_rho{rho}.npy')
 
 an_sol = an_sol[:,:,inds]
 
@@ -87,8 +102,6 @@ print(np.shape(u_x))
 v_x = np.real(np.exp(1j*omega_R*t)*u_x)
 v_y = np.real(np.exp(1j*omega_R*t)*u_y)
 v_z = np.real(np.exp(1j*omega_Z*t)*u_z)
-
-print(v_x)
 
 ############################
 # Solve with the unaveraged modulation variable:
@@ -166,29 +179,30 @@ print('The normalised averaging window size is', zeta)
 
 #############
 # Visualise the modulation variables!
-
-
 fig, (ax1,ax2,ax3) = plt.subplots(3,1, sharex=True)
 ax1.plot(t,B_v_x,c='k')
-ax1.plot(t,C_v_x,c='b',linestyle='dashed')
-ax1.plot(t,D_w_x,c='r',linestyle='dotted')
-ax1.set_ylabel(f"x",size=14)
+ax1.plot(t,C_v_x,c='b')
+ax1.plot(t,D_w_x,c='r')
+ax1.set_xlim([0,200])
+ax1.set_ylabel(f"$x$",size=14)
 ax2.plot(t,B_v_y,c='k')
-ax2.plot(t,C_v_y,c='b',linestyle='dashed')
-ax2.plot(t,D_w_y,c='r',linestyle='dotted')
-ax2.set_ylabel(f"y",size=14)
+ax2.plot(t,C_v_y,c='b')
+ax2.plot(t,D_w_y,c='r')
+ax2.set_ylabel(f"$y$",size=14)
 ax3.plot(t,B_v_z,c='k')
-ax3.plot(t,C_v_z,c='b',linestyle='dashed')
-ax3.plot(t,D_w_z,c='r',linestyle='dotted')
-ax3.set_ylabel(f"z",size=14)
-fig.supxlabel('Time',size=14)
+ax3.plot(t,C_v_z,c='b')
+ax3.plot(t,D_w_z,c='r')
+ax3.set_ylabel(f"$z$",size=14)
+fig.supxlabel('Time (s)',size=14)
 
-custom_lines = [Line2D([0], [0], c='k', lw=4),
-                Line2D([0], [0], c='b', lw=4,linestyle='dashed'),
-                Line2D([0], [0], c='r' , lw=4,linestyle='dotted')]
-fig.legend(custom_lines, ['Modulation variable', 'Standard phase-averaging', 'Mean corrected'], loc='lower center',bbox_to_anchor=(0.5, -0.4), fontsize=12)
+custom_lines = [Line2D([0], [0], c='k', lw=3),
+                Line2D([0], [0], c='b', lw=3),
+                Line2D([0], [0], c='r' , lw=3)]
+fig.legend(custom_lines, ['Modulation variable', 'Standard phase-averaging', 'Mean corrected'], loc='lower center',bbox_to_anchor=(0.5, -0.2), fontsize=12)
+plt.suptitle(r"$\rho$ = " f'{rho}, ' r"$\zeta$ = " f'{zeta}', size=16)
 
+savename = f'figures/swing_spring_modvar_space_rho{rho}_zeta{zeta}.png'
+print(f'\n Saving figure to {savename} \n')
+plt.savefig(savename, bbox_inches="tight")
 
-plt.savefig(f'figures/swing_spring_modvar_space_rho{rho}_zeta{zeta}.png', bbox_inches="tight")
-
-plt.show()
+#plt.show()

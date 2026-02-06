@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 
 ##################
 # Specify the resonance factor
-rho = 1.88
+rho = 1.7
 
 ###################
 #Parameter values
@@ -153,11 +153,25 @@ print('Using an averaging window of', zetas[np.argmin(D_errs)])
 #############
 # Make a Peddle plot!
 
+
 plt.figure()
-plt.plot(zetas, C_errs, label='Standard phase-averaging', c='k')
-plt.plot(zetas, D_errs, label='Mean corrected phase-averaging', c='r', linestyle='dashed')
-plt.legend()
-plt.title(f'Compare phase-averaged methods in the swinging spring, rho={rho}')
-plt.xlabel('Zeta, normalised averaging window')
-plt.ylabel('Solution error')
+plt.plot(zetas, C_errs, label='Standard phase-averaging', c='b', linestyle='dashed')
+plt.plot(zetas, D_errs, label='Mean corrected phase-averaging', c='r')
+plt.rcParams['xtick.labelsize'] = 12
+plt.rcParams['ytick.labelsize'] = 12
+plt.xlabel(f"Normalised averaging window, $\zeta$", size=14)
+plt.ylabel('Solution error', size=14)
+
+plt.xlim(0,4.0)
+
+if rho == 2.0:
+     plt.ylim(0.0,0.12)
+if rho == 1.7:
+    plt.ylim(0.01,0.03)
+else:
+    plt.ylim(0.0,0.1)
+
+plt.legend(loc='lower center',bbox_to_anchor=(0.5, -0.4),fontsize=14)
+plt.savefig(f'figures/swing_spring_peddle_plot_rho{rho}.png', bbox_inches="tight")
+
 plt.show()

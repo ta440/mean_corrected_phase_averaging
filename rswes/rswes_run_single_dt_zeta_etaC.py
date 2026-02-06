@@ -33,9 +33,9 @@ dt = 0.1
 
 ic_type = 'Gaussian_mean_shift'
 
-longer_time = True
+longer_time = False
 
-TT = 50
+TT = 10
 
 # Pick averaging window sizes:
 zeta = 0.7
@@ -258,6 +258,20 @@ plt.legend()
 
 print('% Total error difference:', (np.sum(C_err)-np.sum(D_err))/np.sum(C_err))
 print('Final error difference: ', (C_err[-1]-D_err[-1])/C_err[-1])
+
+# Plot the analytical solution
+fig, (ax1,ax2,ax3) = plt.subplots(3,1)
+fig1 = ax1.contourf(T,X,u_analyt)
+ax1.set_ylabel('u')
+plt.colorbar(fig1,ax=ax1)
+fig2 = ax2.contourf(T,X,v_analyt)
+ax2.set_ylabel('v')
+plt.colorbar(fig2,ax=ax2)
+fig3 = ax3.contourf(T,X,phi_analyt)
+ax3.set_ylabel('Geopotential')
+ax3.set_xlabel('Time')
+plt.colorbar(fig3,ax=ax3)
+plt.suptitle('Comparing geopotential Solutions')
 
 # Plot the geopotential solutions to see if there is a phase shift 
 fig, (ax1,ax2,ax3) = plt.subplots(3,1)
