@@ -31,21 +31,26 @@ from functions.rswes_functions import *
 ##################################################################
 # Define the level of time-scale separation.
 # Values of 0.5,0.1,0.05,0.01, 0.001 are used in the paper.
-epsilon = 0.1
+epsilon = 0.001
 
 # Set a single large timestep size. 
 # Values of 0.05, 0.1, ... 0.35 are used in the paper.
-dt = 0.1
+dt = 0.3
 
 ic_type = 'Gaussian_mean_shift'
 
-longer_time = False
+longer_time = True
 
-TT = 10
+if longer_time:
+    TT = 50
+else:
+    TT = 10
 
 # Pick averaging window sizes:
-zeta = 0.7
-eta_C = 1.4
+zeta = 0.2
+eta_C = 0.001
+
+save_the_fig = False
 
 ##########################################
 # Setup parameters:
@@ -156,8 +161,11 @@ C_U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
 C_u_err = np.sqrt(np.sum((C_U_u-u_analyt)**2,axis=1))
 C_v_err = np.sqrt(np.sum((C_U_v-v_analyt)**2,axis=1))
 C_phi_err = np.sqrt(np.sum((C_U_phi-phi_analyt)**2,axis=1))
+
 # Sum the component errors:
 C_err = C_u_err + C_v_err + C_phi_err
+
+C_err_tot = np.sum(C_err)/len(t)
 
 ##################################################
 # Mean correction:
@@ -207,8 +215,22 @@ D_U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
 D_u_err = np.sqrt(np.sum((D_U_u-u_analyt)**2,axis=1))
 D_v_err = np.sqrt(np.sum((D_U_v-v_analyt)**2,axis=1))
 D_phi_err = np.sqrt(np.sum((D_U_phi-phi_analyt)**2,axis=1))
+
 # Sum the component errors:
 D_err = D_u_err + D_v_err + D_phi_err
+
+D_err_tot = np.sum(D_err)/len(t)
+
+############################################
+
+print('C error is', C_err_tot)
+print('D error is', D_err_tot)
+
+print('% Total error difference:', (np.sum(C_err)-np.sum(D_err))/np.sum(C_err))
+print('Final error difference: ', (C_err[-1]-D_err[-1])/C_err[-1])
+
+
+############################################
 
 # Plot the total errors over time
 plt.figure()
@@ -231,9 +253,10 @@ plt.legend(fontsize=12)
 plt.xticks(size=12)
 plt.yticks(size=12)
 
-savename = f'figures/rswes_error_over_time_eps{epsilon}_dt{dt}.png'
-plt.savefig(savename, bbox_inches="tight")
-print('saving to ', savename)
+if save_the_fig:
+    savename = f'figures/rswes_error_over_time_eps{epsilon}_dt{dt}.png'
+    plt.savefig(savename, bbox_inches="tight")
+    print('saving to ', savename)
 
 plt.figure()
 plt.plot(t, C_u_err, label='Standard phase-averaging')
@@ -261,9 +284,6 @@ plt.xlabel('Time')
 plt.ylabel('Geopotential error')
 plt.title(f'Comparing geopotential error over time, dt={dt}, eps={epsilon}')
 plt.legend()
-
-print('% Total error difference:', (np.sum(C_err)-np.sum(D_err))/np.sum(C_err))
-print('Final error difference: ', (C_err[-1]-D_err[-1])/C_err[-1])
 
 # Plot the analytical solution
 fig, (ax1,ax2,ax3) = plt.subplots(3,1)

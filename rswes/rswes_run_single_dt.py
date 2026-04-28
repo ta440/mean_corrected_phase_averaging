@@ -33,13 +33,16 @@ epsilon = 0.1
 
 # Set a single large timestep size. 
 # Values of 0.05, 0.1, ... 0.35 are used in the paper.
-dt = 0.2
+dt = 0.1
 
 ic_type = 'Gaussian_mean_shift'
 
 longer_time = True
 
-TT = 50
+if longer_time:
+    TT = 50
+else:
+    TT = 10
 
 ##########################################
 # Setup parameters:
@@ -176,13 +179,17 @@ for m in np.arange(len(zetas)):
     U_v = np.real(np.fft.ifft(U_specs[:,1,:]))
     U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
 
-    #Compute errors relative to the saved analytical solution:
-    u_err = np.sum(np.abs(U_u-u_analyt),axis=1)
-    v_err = np.sum(np.abs(U_v-v_analyt),axis=1)
-    phi_err = np.sum(np.abs(U_phi-phi_analyt),axis=1)
+    # OLD ERROR measure: L2 sum of L1.
+    #u_err = np.sum(np.abs(U_u-u_analyt),axis=1)
+    #v_err = np.sum(np.abs(U_v-v_analyt),axis=1)
+    #phi_err = np.sum(np.abs(U_phi-phi_analyt),axis=1)
+    #tot_err = np.sum(np.sqrt(u_err**2 + v_err**2 + phi_err**2))/len(t)
 
-    #Sum of L2 errors:
-    tot_err = np.sum(np.sqrt(u_err**2 + v_err**2 + phi_err**2))/len(t)
+    # New error measure: Sum of L2 errors
+    u_err = np.sqrt(np.sum((U_u-u_analyt)**2,axis=1))
+    v_err = np.sqrt(np.sum((U_v-v_analyt)**2,axis=1))
+    phi_err = np.sqrt(np.sum((U_phi-phi_analyt)**2,axis=1))
+    tot_err = np.sum(u_err + v_err + phi_err)/len(t)
 
     C_errs[m] = tot_err
 
@@ -252,13 +259,17 @@ for m in np.arange(len(etas_C)):
     U_v = np.real(np.fft.ifft(U_specs[:,1,:]))
     U_phi = np.real(np.fft.ifft(U_specs[:,2,:]))
 
-    #Compute errors relative to these analytical expressions:
-    u_err = np.sum(np.abs(U_u-u_analyt),axis=1)
-    v_err = np.sum(np.abs(U_v-v_analyt),axis=1)
-    phi_err = np.sum(np.abs(U_phi-phi_analyt),axis=1)
-    
-    #Sum of L2 errors:
-    tot_err = np.sum(np.sqrt(u_err**2 + v_err**2 + phi_err**2))/len(t)
+    # OLD ERROR measure: L2 sum of L1.
+    #u_err = np.sum(np.abs(U_u-u_analyt),axis=1)
+    #v_err = np.sum(np.abs(U_v-v_analyt),axis=1)
+    #phi_err = np.sum(np.abs(U_phi-phi_analyt),axis=1)
+    #tot_err = np.sum(np.sqrt(u_err**2 + v_err**2 + phi_err**2))/len(t)
+
+    # New error measure: Sum of L2 errors
+    u_err = np.sqrt(np.sum((U_u-u_analyt)**2,axis=1))
+    v_err = np.sqrt(np.sum((U_v-v_analyt)**2,axis=1))
+    phi_err = np.sqrt(np.sum((U_phi-phi_analyt)**2,axis=1))
+    tot_err = np.sum(u_err + v_err + phi_err)/len(t)
 
     D_errs[m] = tot_err
 
